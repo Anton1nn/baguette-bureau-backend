@@ -1,14 +1,17 @@
+# routers/processed_orders.py
+
 from fastapi import APIRouter, Depends, status
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 from typing import List, Optional
 from pydantic import BaseModel
 from datetime import datetime
 
-from database import get_db
+from database import get_async_session
 from models.processed_order import ProcessedOrder
-from models.user import User
 from models.client import Client
 from routers.auth import get_current_user
+from models.user import User
 
 router = APIRouter()
 
@@ -30,16 +33,14 @@ class ProcessedOrderOut(BaseModel):
     summary="Récupérer les commandes archivées de l'utilisateur connecté",
     tags=["Commandes archivées"]
 )
-def get_processed_orders(
-    db: Session = Depends(get_db),
+async def get_processed_orders(
+    db: AsyncSession = Depends(get_async_session),
     user: User = Depends(get_current_user)
 ):
-    orders = (
-        db.query(ProcessedOrder)
-        .filter(ProcessedOrder.owner_id == user.id)
-        .order_by(ProcessedOrder.created_at.desc())
-        .all()
+    result = await db.execute(
+        select(ProcessedOrder).where(ProcessedOrder.owner_id == user.id).order_by(ProcessedOrder.created_at.desc())
     )
+    orders = result.scalars().all()
 
     return [
         ProcessedOrderOut(
