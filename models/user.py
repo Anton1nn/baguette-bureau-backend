@@ -16,3 +16,14 @@ class User(Base):
 
     def __repr__(self):
         return f"<User(id={self.id}, email='{self.email}')>"
+        
+from pydantic import BaseModel
+from typing import Optional
+
+class UserOut(BaseModel):
+    id: int
+    email: str
+    name: Optional[str] = None
+
+    class Config:
+        from_attributes = True  # pour Pydantic v2
