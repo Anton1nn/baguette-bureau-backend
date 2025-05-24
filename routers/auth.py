@@ -4,6 +4,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from database import get_async_session
 from models.user import User
 from sqlalchemy.future import select
+from fastapi import APIRouter
+
+router = APIRouter()
+
 
 SECRET_KEY = "VOTRE_CLE_SECRETE"
 ALGORITHM = "HS256"
