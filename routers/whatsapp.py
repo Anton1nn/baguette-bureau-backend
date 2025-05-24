@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from typing import Dict, Any
 import logging
-from .venom_bot_service import get_qr_code, get_whatsapp_status
+from services.venom_bot_service import get_qr_code, get_whatsapp_status
 
 # Configuration du logger
 logger = logging.getLogger(__name__)
