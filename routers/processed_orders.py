@@ -1,5 +1,3 @@
-# routers/processed_orders.py
-
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
@@ -9,14 +7,12 @@ from datetime import datetime
 from database import get_db
 from models.processed_order import ProcessedOrder
 from models.user import User
+from models.client import Client
 from routers.auth import get_current_user
 
 router = APIRouter()
 
 class ProcessedOrderOut(BaseModel):
-    """
-    Schéma Pydantic pour exposer les commandes archivées
-    """
     id: int
     client_name: Optional[str]
     delivery_date: Optional[datetime]
@@ -38,9 +34,6 @@ def get_processed_orders(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user)
 ):
-    """
-    Récupère toutes les commandes archivées appartenant à l'utilisateur connecté.
-    """
     orders = (
         db.query(ProcessedOrder)
         .filter(ProcessedOrder.owner_id == user.id)
