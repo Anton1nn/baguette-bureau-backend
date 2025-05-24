@@ -1,4 +1,6 @@
 from pydantic import BaseModel, EmailStr
+from schemas.user import UserOut
+
 
 class UserCreate(BaseModel):
     name: str
