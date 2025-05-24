@@ -9,8 +9,7 @@ from datetime import datetime
 from database import get_db
 from models.processed_order import ProcessedOrder
 from models.user import User
-from models.client import Client
-from routers.auth import get_current_user  # Supposé déjà défini dans auth.py
+from routers.auth import get_current_user
 
 router = APIRouter()
 
@@ -19,7 +18,7 @@ class ProcessedOrderOut(BaseModel):
     Schéma Pydantic pour exposer les commandes archivées
     """
     id: int
-    client_name: Optional[str]  # Peut être None si client supprimé
+    client_name: Optional[str]
     delivery_date: Optional[datetime]
     status: str
     pdf_path: Optional[str]
@@ -40,10 +39,8 @@ def get_processed_orders(
     user: User = Depends(get_current_user)
 ):
     """
-    Récupère toutes les commandes archivées appartenant à l'utilisateur connecté,
-    triées par date de création décroissante, avec nom du client inclus.
+    Récupère toutes les commandes archivées appartenant à l'utilisateur connecté.
     """
-    # Requête avec jointure client pour récupérer client_name
     orders = (
         db.query(ProcessedOrder)
         .filter(ProcessedOrder.owner_id == user.id)
@@ -51,18 +48,14 @@ def get_processed_orders(
         .all()
     )
 
-    # Préparation du résultat en incluant client_name depuis relation (peut être None)
-    results = []
-    for order in orders:
-        client_name = order.client.name if order.client else None
-        results.append(
-            ProcessedOrderOut(
-                id=order.id,
-                client_name=client_name,
-                delivery_date=order.delivery_date,
-                status=order.status,
-                pdf_path=order.pdf_path,
-                created_at=order.created_at
-            )
+    return [
+        ProcessedOrderOut(
+            id=order.id,
+            client_name=order.client.name if order.client else None,
+            delivery_date=order.delivery_date,
+            status=order.status,
+            pdf_path=order.pdf_path,
+            created_at=order.created_at
         )
-    return results
+        for order in orders
+    ]
