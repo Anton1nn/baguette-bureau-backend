@@ -5,6 +5,7 @@ from database import get_async_session
 from models.user import User
 from sqlalchemy.future import select
 from fastapi import APIRouter
+from models.user import UserOut
 
 router = APIRouter()
 
