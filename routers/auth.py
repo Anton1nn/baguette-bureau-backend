@@ -1,40 +1,33 @@
-from fastapi import APIRouter, HTTPException, status, Depends
-from pydantic import BaseModel
-from typing import Optional
-from services.venom_bot_service import create_whatsapp_session
-from services.user_service import create_user, authenticate_user, get_user_by_token
+from fastapi import Depends, HTTPException, status
+from jose import JWTError, jwt
+from sqlalchemy.ext.asyncio import AsyncSession
+from database import get_async_session
+from models.user import User
+from sqlalchemy.future import select
 
+SECRET_KEY = "VOTRE_CLE_SECRETE"
+ALGORITHM = "HS256"
 
-# Supposons que ces fonctions/classes existent dans votre projet
-from services.user_service import create_user, authenticate_user, get_user_by_token
+async def get_current_user(token: str = Depends(...), db: AsyncSession = Depends(get_async_session)):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Impossible de valider les identifiants",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: int = payload.get("sub")
+        if user_id is None:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
 
-router = APIRouter()
-
-class UserRegister(BaseModel):
-    email: str
-    password: str
-    full_name: Optional[str] = None
-
-class UserLogin(BaseModel):
-    email: str
-    password: str
-
-class UserOut(BaseModel):
-    id: int
-    email: str
-    full_name: Optional[str] = None
-
-def get_current_user(token: str = Depends(...)):
-    """
-    À compléter selon votre logique d'authentification.
-    """
-    user = get_user_by_token(token)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Utilisateur non authentifié"
-        )
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    if user is None:
+        raise credentials_exception
     return user
+
 
 @router.post("/register", response_model=UserOut)
 async def register(user: UserRegister):
