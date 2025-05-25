@@ -7,6 +7,7 @@ from sqlalchemy.future import select
 from fastapi import APIRouter
 from models.user import UserOut
 from schemas.user import UserOut
+from schemas import UserOut
 
 
 router = APIRouter()
