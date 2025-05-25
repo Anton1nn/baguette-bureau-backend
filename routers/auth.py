@@ -4,9 +4,8 @@ from jose import JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from database import get_async_session
-from models.user import User
-from schemas import UserOut, UserCreate, UserLogin  # Tu dois définir ces classes dans schemas.py
-# from your_module import create_user, authenticate_user, create_whatsapp_session  # À implémenter
+from models.user import User  # modèle ORM
+from schemas import UserOut, UserCreate, UserLogin  # les bons schémas Pydantic
 
 router = APIRouter()
 
@@ -14,8 +13,12 @@ SECRET_KEY = "VOTRE_CLE_SECRETE"
 ALGORITHM = "HS256"
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
+
 # === Fonction pour obtenir l'utilisateur courant via JWT ===
-async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_async_session)):
+async def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    db: AsyncSession = Depends(get_async_session)
+):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Impossible de valider les identifiants",
@@ -35,30 +38,26 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession
         raise credentials_exception
     return user
 
+
 # === Route pour l'inscription ===
 @router.post("/register", response_model=UserOut)
 async def register(user: UserCreate, db: AsyncSession = Depends(get_async_session)):
-    # Vérifie si l'utilisateur existe déjà
     result = await db.execute(select(User).where(User.email == user.email))
     existing_user = result.scalar_one_or_none()
     if existing_user:
         raise HTTPException(status_code=400, detail="Email déjà utilisé")
 
-    # Création d'un nouvel utilisateur
     new_user = User(name=user.name, email=user.email, password=user.password)
     db.add(new_user)
     await db.commit()
     await db.refresh(new_user)
 
-    # Appel fictif : créer la session WhatsApp (à implémenter)
-    # await create_whatsapp_session(new_user.id)
+    return UserOut(id=new_user.id, name=new_user.name, email=new_user.email)
 
-    return new_user
 
 # === Route pour le login ===
 @router.post("/login")
 async def login(user: UserLogin, db: AsyncSession = Depends(get_async_session)):
-    # Authentifie l'utilisateur (exemple simplifié)
     result = await db.execute(select(User).where(User.email == user.email))
     db_user = result.scalar_one_or_none()
     if not db_user or db_user.password != user.password:
