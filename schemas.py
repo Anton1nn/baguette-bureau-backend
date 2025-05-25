@@ -1,13 +1,18 @@
 from typing import Optional
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, constr
 
 # Schéma pour la création d'utilisateur (inscription)
 class UserCreate(BaseModel):
     name: str
     email: EmailStr
-    password: str
+    password: constr(min_length=6)
 
-# Schéma de sortie d'utilisateur complet (par exemple dans le token ou la réponse API)
+# Schéma utilisé à la connexion (login)
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: constr(min_length=6)
+
+# Schéma de sortie d'utilisateur complet (ex: dans un token ou une réponse API)
 class User(BaseModel):
     id: int
     name: str
@@ -15,9 +20,9 @@ class User(BaseModel):
     is_active: bool
 
     class Config:
-        from_attributes = True  # nouvelle syntaxe Pydantic v2
+        from_attributes = True  # Pydantic v2 syntaxe
 
-# Schéma de sortie simplifié, utilisé dans les routes (ex: /register)
+# Schéma simplifié pour la sortie utilisateur
 class UserOut(BaseModel):
     id: int
     email: EmailStr
