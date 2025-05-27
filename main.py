@@ -18,8 +18,9 @@ async def startup_event():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-# Configuration CORS pour autoriser le frontend local
+# Configuration CORS pour autoriser le frontend Render + local
 origins = [
+    "https://baguette-bureau-frontend.onrender.com",
     "http://localhost:3000",
     "http://127.0.0.1:3000"
 ]
